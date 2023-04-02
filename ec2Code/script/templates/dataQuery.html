@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>QUERY</title>
+</head>
+
+<body>
+    <h1>Here is your Query Data</h1>
+        <input type="submit" value="Back" name="Back" />
+    <h3>Result</h3>
+    {% for table in tables %}
+                {{titles[loop.index]}}
+                {{ table|safe }}
+    {% endfor %}
+</body>
+</html>

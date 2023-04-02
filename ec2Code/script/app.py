@@ -3,10 +3,18 @@ import pandas as pd
 import boto3
 from io import StringIO
 
+# Create an S3 client
 s3 = boto3.client('s3')
+
+# Create a Flask app
 app = Flask(__name__)
 
 def getDF():
+    """
+    Retrieves a Pandas DataFrame from an S3 bucket.
+    Returns:
+    Pandas DataFrame: The DataFrame retrieved from S3.
+    """
     csv_obj = s3.get_object(Bucket='yash-all-csv-bucket', Key='completeDf.csv')
     body = csv_obj['Body']
     csv_string = body.read().decode('utf-8')
@@ -15,70 +23,39 @@ def getDF():
 
 @app.route('/', methods=['GET', 'POST'])
 def homeQ():
+    """
+    Renders the home page and processes user queries.
+    Returns:
+    str: The HTML content to be displayed.
+    """
     if request.method == 'POST':
         if request.form.get('Query') == 'done':
+            # Get the search parameters from the user
             star=request.form.get('star')
             word=request.form.get('word')
+            # Query the DataFrame for articles matching the search parameters
             df = getDF()
             df = df.drop_duplicates()
             df = df.query(f'{star}.str.contains("{word}")', engine='python').filter(items=request.form.getlist('Column'))
+            # Render the data query page with the results
             return render_template("dataQuery.html",tables=[df.to_html(classes='data')], titles=df.columns.values)
+    # Render the home page
     return render_template("index.html")
 
 
 @app.route('/all',methods=['GET', 'POST'])
 def dfAll():
+    """
+    Renders a page displaying the entire DataFrame.
+    Returns:
+    str: The HTML content to be displayed.
+    """
+    # Retrieve the DataFrame from S3
     df = getDF()
+    # Render the data query page with the entire DataFrame
     if request.method == 'GET':
         return render_template("dataQuery.html",tables=[df.to_html(classes='data')], titles=df.columns.values)
 
 if __name__ == '__main__':
+    # Start the Flask app
     app.run(debug=True)
-
-
-
-
-
-
-
-
-
-
-
-
-# @app.route('/dbf')
-# def queryFine(dbf):
-#     df = dbf
-#     return render_template("dataQuery.html",tables=[df.to_html(classes='data')], titles=df.columns.values)
-
-
-
-
-# def hello_world():
-#     if request.method == 'POST':
-#         if request.form.get('action1') == 'VALUE1':
-#             # return render_template('data.html',form_data = form_data)
-#             text01 =  request.form.get('Column')
-#             print(text01)
-#             # return text01
-#             pass # do something
-#         elif  request.form.get('action2') == 'VALUE2':
-#             pass # do something else
-#         else:
-#             pass # unknown
-#     elif request.method == 'GET':
-#         return render_template('index.html')
-#     return render_template("index.html")
-
-
-# def queryData():
-#     csv_obj = s3.get_object(Bucket='yash-all-csv-bucket', Key='completeDf.csv')
-#     body = csv_obj['Body']
-#     csv_string = body.read().decode('utf-8')
-#     df = pd.read_csv(StringIO(csv_string))
-#     df = df.drop_duplicates()
-#     df = df.query('name.str.contains(".com")', engine='python').filter(items=request.form.getlist('Column'))
-#     return render_template(df)
-    # return render_template("dataQuery.html",tables=[df.to_html(classes='data')], titles=df.columns.values)
-
-
